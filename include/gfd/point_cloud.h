@@ -16,7 +16,7 @@
 
 #include <cmath>
 //#include <tuple>
-//#include <vector>
+#include <vector>
 //#include <map>
 #include <cassert>
 #include <iostream>
@@ -37,35 +37,31 @@
 //#include <pcl/sample_consensus/sac_model_sphere.h>
 
 
-namespace gfd {
+namespace cv {
     
-    static cv::Point3f reproject(cv::Point2i pixel, float depth, const cv::Point2f& focal_length, const cv::Point2f& center) {
-        const float& fx = focal_length.x;
-        const float& fy = focal_length.y;
-        const float& cx = center.x;
-        const float& cy = center.y;
-        
-        float x = depth*(pixel.x - cx)/fx;
-        float y = depth*(pixel.y - cy)/fy;
-        return cv::Point3f(x, y, depth);
+    
+}
+
+namespace gfd {
+    template <typename number_t>
+    static cv::Point3_<number_t> reproject(cv::Point2i pixel, number_t depth, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
+        number_t x = depth*(pixel.x - image_center.x)/focal_length.x;
+        number_t y = depth*(pixel.y - image_center.y)/focal_length.y;
+        return cv::Point3_<number_t>(x, y, depth);
     }
     
-    static std::vector<cv::Point3f> reproject(const std::vector<cv::Point2i>& pixels, const cv::Mat1f& depth_image, const cv::Point2f& focal_length, const cv::Point2f& center) {
+    template <typename number_t>
+    static std::vector<cv::Point3_<number_t>> reproject(const std::vector<cv::Point2i>& pixels, const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         
-        const float& fx = focal_length.x;
-        const float& fy = focal_length.y;
-        const float& cx = center.x;
-        const float& cy = center.y;
-        
-        std::vector<cv::Point3f> points;
+        std::vector<cv::Point3_<number_t>> points;
         points.reserve(pixels.size());
         
         for (const cv::Point2i& pixel : pixels) {
             
-            const float& z = depth_image.at<float>(pixel.y, pixel.x);
+            const number_t& z = depth_image.at(pixel.y, pixel.x);
             if (not std::isnan(z)) {
-                float x = z*(pixel.x - cx)/fx;
-                float y = z*(pixel.y - cy)/fy;
+                number_t x = z*(pixel.x - image_center.x)/focal_length.x;
+                number_t y = z*(pixel.y - image_center.y)/focal_length.y;
                 points.emplace_back(x, y, z);
             }
             
@@ -75,14 +71,10 @@ namespace gfd {
         
     }
     
-    static cv::Mat3f reproject(const cv::Mat1f& depth_image, const cv::Point2f& focal_length, const cv::Point2f& center) {
+    template <typename number_t>
+    static cv::Mat_<cv::Vec<number_t, 3>> reproject(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         
-        const float& fx = focal_length.x;
-        const float& fy = focal_length.y;
-        const float& cx = center.x;
-        const float& cy = center.y;
-        
-        cv::Mat3f points(depth_image.rows, depth_image.cols, CV_32FC3);
+        cv::Mat_<cv::Vec<number_t, 3>> points(depth_image.rows, depth_image.cols, cv::traits::Type<cv::Vec<number_t, 3>>::value);
         
         assert(depth_image.isContinuous());
         size_t pixel_y, pixel_x, index;
@@ -91,12 +83,12 @@ namespace gfd {
             for (pixel_x = 0; pixel_x < depth_image.cols; ++pixel_x) {
                 index = pixel_y*depth_image.cols + pixel_x;
             
-                const float& z = reinterpret_cast<float*>(depth_image.data)[index];
-                cv::Vec3f& point = reinterpret_cast<cv::Vec3f*>(points.data)[index];
+                const number_t& z = reinterpret_cast<number_t*>(depth_image.data)[index];
+                cv::Vec<number_t, 3>& point = reinterpret_cast<cv::Vec<number_t, 3>*>(points.data)[index];
                 
                 if (not std::isnan(z)) {
-                    point[0] = z*(pixel_x - cx)/fx;
-                    point[1] = z*(pixel_y - cy)/fy;
+                    point[0] = z*(pixel_x - image_center.x)/focal_length.x;
+                    point[1] = z*(pixel_y - image_center.y)/focal_length.y;
                     point[2] = z;
                 } else {
                     point[0] = z;
@@ -112,28 +104,23 @@ namespace gfd {
         
     }
     
-    static cv::Mat3f reprojectParallelized(const cv::Mat1f& depth_image, const cv::Point2f& focal_length, const cv::Point2f& center) {
+    template <typename number_t>
+    static cv::Mat_<cv::Vec<number_t, 3>> reprojectParallelized(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         
-        const float& fx = focal_length.x;
-        const float& fy = focal_length.y;
-        const float& cx = center.x;
-        const float& cy = center.y;
-        
-        cv::Mat points(depth_image.rows, depth_image.cols, CV_32FC3);
-        
+        cv::Mat_<cv::Vec<number_t, 3>> points(depth_image.rows, depth_image.cols, cv::traits::Type<cv::Vec<number_t, 3>>::value);
         assert(depth_image.isContinuous());
 
-        points.forEach<cv::Vec3f>(
-            [&depth_image, &fx, &fy, &cx, &cy](cv::Vec3f& point, const int* position) -> void {
+        points.forEach(
+            [&depth_image, &focal_length, &image_center](cv::Vec<number_t, 3>& point, const int* position) -> void {
                 size_t pixel_y = position[0];
                 size_t pixel_x = position[1];
                 size_t index = pixel_y*depth_image.cols + pixel_x;
 
-                const float& z = reinterpret_cast<float*>(depth_image.data)[index];
+                const number_t& z = reinterpret_cast<number_t*>(depth_image.data)[index];
                 
                 if (not std::isnan(z)) {
-                    point[0] = z*(pixel_x - cx)/fx;
-                    point[1] = z*(pixel_y - cy)/fy;
+                    point[0] = z*(pixel_x - image_center.x)/focal_length.x;
+                    point[1] = z*(pixel_y - image_center.y)/focal_length.y;
                     point[2] = z;
                 } else {
                     point[0] = z;
@@ -147,19 +134,20 @@ namespace gfd {
         
     }
     
-    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCL(const std::vector<cv::Point2i>& pixel_locations, 
-            const cv::Mat1f& depth_image, const cv::Point2f& focal_length, const cv::Point2f& image_center) {
+    template <typename number_t>
+    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCL(const std::vector<cv::Point2i>& pixels, 
+            const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
         cloud->is_dense = true;
-        cloud->reserve(pixel_locations.size());
+        cloud->reserve(pixels.size());
         
-        for (const cv::Point2i& pixel : pixel_locations) {
+        for (const cv::Point2i& pixel : pixels) {
             
-            const float& z = depth_image.at<float>(pixel.y, pixel.x);
+            const number_t& z = depth_image.at(pixel.y, pixel.x);
             if (not std::isnan(z)) {
-                float x = z*(pixel.x - image_center.x)/focal_length.x;
-                float y = z*(pixel.y - image_center.y)/focal_length.y;
+                number_t x = z*(pixel.x - image_center.x)/focal_length.x;
+                number_t y = z*(pixel.y - image_center.y)/focal_length.y;
                 cloud->points.emplace_back(x, y, z);
             }
             
@@ -169,7 +157,8 @@ namespace gfd {
         
     }
     
-    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCL(const cv::Mat1f& depth_image, const cv::Point2f& focal_length, const cv::Point2f& image_center) {
+    template <typename number_t>
+    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCL(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
         cloud->width = depth_image.cols;
@@ -184,11 +173,11 @@ namespace gfd {
             for (pixel_x = 0; pixel_x < depth_image.cols; ++pixel_x) {
                 index = pixel_y*depth_image.cols + pixel_x;
             
-                const float& z = reinterpret_cast<float*>(depth_image.data)[index];
+                const number_t& z = reinterpret_cast<number_t*>(depth_image.data)[index];
                 
                 if (not std::isnan(z)) {
-                    float x = z*(pixel_x - image_center.x)/focal_length.x;
-                    float y = z*(pixel_y - image_center.y)/focal_length.y;
+                    number_t x = z*(pixel_x - image_center.x)/focal_length.x;
+                    number_t y = z*(pixel_y - image_center.y)/focal_length.y;
                     cloud->points.emplace(cloud->begin() + index, x, y, z);
                 } else {
                     cloud->points.emplace(cloud->begin() + index, z, z, z);
@@ -201,7 +190,8 @@ namespace gfd {
         
     }
     
-    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCLParallelized(const cv::Mat& depth_image, const cv::Point2f& focal_length, const cv::Point2f& image_center) {
+    template <typename number_t>
+    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCLParallelized(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         // Probably slower than reprojectPCL due to cloud->resize default construction
         
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -211,25 +201,22 @@ namespace gfd {
         float nan = std::numeric_limits<float>::quiet_NaN();
         cloud->points.resize(depth_image.total(), pcl::PointXYZ(nan, nan, nan));
 
-        depth_image.forEach<float>(
-            [&cloud, &focal_length, &image_center](const float& z, const int* position) -> void {
+        depth_image.forEach(
+            [&cloud, &focal_length, &image_center](const number_t& z, const int* position) -> void {
                 size_t pixel_y = position[0];
                 size_t pixel_x = position[1];
                 size_t index = pixel_y*cloud->width + pixel_x;
                 
                 if (not std::isnan(z)) {
-                    float x = z*(pixel_x - image_center.x)/focal_length.x;
-                    float y = z*(pixel_y - image_center.y)/focal_length.y;
+                    number_t x = z*(pixel_x - image_center.x)/focal_length.x;
+                    number_t y = z*(pixel_y - image_center.y)/focal_length.y;
                     cloud->at(index) = std::move(pcl::PointXYZ(x, y, z));
                 };
-            
             }
         );
         
         return cloud;
     }
-    
-    
     
 }
 
