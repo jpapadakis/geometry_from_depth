@@ -33,6 +33,10 @@
 
 namespace cv {
     
+    template <typename number_t>
+    std::vector<cv::Point3_<number_t>> toVectorPoint3(const cv::Mat_<cv::Vec<number_t, 3>>& points_mat) {
+        return static_cast<std::vector<cv::Point3_<number_t>>>(points_mat.reshape(3, points_mat.total()));
+    }
     
 }
 
@@ -101,10 +105,10 @@ namespace gfd {
     template <typename number_t>
     static cv::Mat_<cv::Vec<number_t, 3>> reprojectParallelized(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         
-        cv::Mat_<cv::Vec<number_t, 3>> points(depth_image.rows, depth_image.cols, cv::traits::Type<cv::Vec<number_t, 3>>::value);
+        cv::Mat_<cv::Vec<number_t, 3>> points_mat(depth_image.rows, depth_image.cols, cv::traits::Type<cv::Vec<number_t, 3>>::value);
         assert(depth_image.isContinuous());
 
-        points.forEach(
+        points_mat.forEach(
             [&depth_image, &focal_length, &image_center](cv::Vec<number_t, 3>& point, const int* position) -> void {
                 size_t pixel_y = position[0];
                 size_t pixel_x = position[1];
@@ -124,7 +128,7 @@ namespace gfd {
             }
         );
             
-        return points;
+        return points_mat;
         
     }
     
@@ -186,7 +190,6 @@ namespace gfd {
     
     template <typename number_t>
     static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCLParallelized(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
-        // Probably slower than reprojectPCL due to cloud->resize default construction
         
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
         cloud->width = depth_image.cols;

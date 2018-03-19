@@ -30,7 +30,7 @@
 namespace gfd {
     
     template <typename number_t>
-    static void fitExplicitPlaneLeastSquares(std::vector<cv::Point3_<number_t>>& points, cv::Plane3_<number_t>& plane3, number_t& error,
+    static void fitExplicitPlaneLeastSquares(const std::vector<cv::Point3_<number_t>>& points, cv::Plane3_<number_t>& plane3, number_t& error,
                     number_t& noise, size_t& inliers, size_t& outliers, size_t& invalid){
         
         cv::Mat _M = cv::Mat::zeros(points.size(), 3, cv::traits::Type<number_t>::value);
@@ -80,7 +80,7 @@ namespace gfd {
     }
 
     template <typename number_t>
-    static void fitImplicitPlaneLeastSquares(std::vector<cv::Point3_<number_t>>& points, cv::Plane3_<number_t>& plane3, number_t& error,
+    static void fitImplicitPlaneLeastSquares(const std::vector<cv::Point3_<number_t>>& points, cv::Plane3_<number_t>& plane3, number_t& error,
             number_t& noise, size_t& inliers, size_t& outliers, size_t& invalid) {
         
         size_t numPoints = points.size();

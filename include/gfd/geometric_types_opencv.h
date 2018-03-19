@@ -266,12 +266,12 @@ namespace cv {
 
     class Consensus {
     public:
-        int inliers, outliers, invalid;
+        size_t inliers, outliers, invalid;
 
         Consensus() : inliers(0), outliers(0), invalid(0) {
         }
 
-        Consensus(int _inliers, int _outliers, int _invalid) :
+        Consensus(size_t _inliers, size_t _outliers, size_t _invalid) :
         inliers(_inliers), outliers(_outliers), invalid(_invalid) {
 
         }
