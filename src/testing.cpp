@@ -1,10 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 #include <gfd/point_cloud.h>
+#include <gfd/plane_fit.h>
 #include <iostream>
 
 int main(int argc, char** argv) {
