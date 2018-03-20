@@ -40,7 +40,7 @@ namespace cv {
         Plane3_(const cv::Point3_<number_t>& pt1, const cv::Point3_<number_t>& pt2,
                 const cv::Point3_<number_t>& pt3) {
             setCoeffs(pt1, pt2, pt3);
-        }
+        }	
 
         Plane3_<number_t> clone() {
             return Plane3_<number_t>(this->x, this->y, this->z, this->d);
@@ -262,8 +262,6 @@ namespace cv {
         int label;
     };
 
-    
-
     class Consensus {
     public:
         size_t inliers, outliers, invalid;
@@ -286,6 +284,31 @@ namespace cv {
         }
     };
 
+    class FitStatistics : public Consensus {
+    public:
+        float error = 0;
+        float error_squared = 0;
+        float noise = 0;
+        
+        FitStatistics() {
+        }
+        
+        FitStatistics(float _error, float _error_squared, float _noise, 
+                size_t _inliers, size_t _outliers, size_t _invalid) : 
+            error(_error), error_squared(_error_squared), noise(_noise), 
+            Consensus::Consensus(_inliers, _outliers, _invalid) {}
+        
+    };
+    
+    template <typename number_t>
+    class PlaneWithStats3_ : public LabeledPlane3_<number_t> {
+    public:
+        FitStatistics stats;
+        
+    };
+    typedef PlaneWithStats3_<float> PlaneWithStats3f;
+    typedef PlaneWithStats3_<double> PlaneWithStats3d;
+    
     class RectWithError : public cv::Rect, public Consensus {
     public:
         float error, noise;

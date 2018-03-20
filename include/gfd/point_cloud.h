@@ -41,6 +41,7 @@ namespace cv {
 }
 
 namespace gfd {
+    
     template <typename number_t>
     static cv::Point3_<number_t> reproject(cv::Point2i pixel, number_t depth, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         number_t x = depth*(pixel.x - image_center.x)/focal_length.x;

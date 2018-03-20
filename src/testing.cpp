@@ -26,12 +26,16 @@ int main(int argc, char** argv) {
     cv::Mat3f points_mat = gfd::reproject(depth, focal_length, center);
     std::vector<cv::Point3f> points = cv::toVectorPoint3(points_mat);
     
-    cv::RectWithError rect;
-    cv::Plane3f plane;
-    gfd::fitImplicitPlaneLeastSquares(points, plane, rect.error, rect.noise, rect.inliers, rect.outliers, rect.invalid);
+    cv::Plane3f plane, plane2;
+    cv::PlaneWithStats3f plane3, plane4;
+    plane = gfd::fitImplicitPlaneLeastSquares(points);
+    plane2 = gfd::fitExplicitPlaneLeastSquares(points);
+    plane3 = gfd::fitImplicitPlaneLeastSquaresWithStats(points);
+    plane4 = gfd::fitExplicitPlaneLeastSquaresWithStats(points);
     std::cout << "implicit plane fit: " << plane.toString() << "\n";
-    gfd::fitExplicitPlaneLeastSquares(points, plane, rect.error, rect.noise, rect.inliers, rect.outliers, rect.invalid);
-    std::cout << "explicit plane fit: " << plane.toString() << "\n";
+    std::cout << "explicit plane fit: " << plane2.toString() << "\n";
+    std::cout << "implicit plane fit: " << plane3.toString() << "\n";
+    std::cout << "explicit plane fit: " << plane4.toString() << "\n";
     
 //    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 //    
