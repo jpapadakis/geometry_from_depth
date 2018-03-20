@@ -55,8 +55,9 @@ namespace gfd {
         points.reserve(pixels.size());
         
         for (const cv::Point2i& pixel : pixels) {
+            size_t index = pixel.y*depth_image.cols + pixel.x;
             
-            const number_t& z = depth_image.at(pixel.y, pixel.x);
+            const number_t& z = reinterpret_cast<number_t*>(depth_image.data)[index];
             if (not std::isnan(z)) {
                 number_t x = z*(pixel.x - image_center.x)/focal_length.x;
                 number_t y = z*(pixel.y - image_center.y)/focal_length.y;
@@ -141,8 +142,9 @@ namespace gfd {
         cloud->reserve(pixels.size());
         
         for (const cv::Point2i& pixel : pixels) {
+            size_t index = pixel.y*depth_image.cols + pixel.x;
             
-            const number_t& z = depth_image.at(pixel.y, pixel.x);
+            const number_t& z = reinterpret_cast<number_t*>(depth_image.data)[index];
             if (not std::isnan(z)) {
                 number_t x = z*(pixel.x - image_center.x)/focal_length.x;
                 number_t y = z*(pixel.y - image_center.y)/focal_length.y;
@@ -195,7 +197,7 @@ namespace gfd {
         cloud->width = depth_image.cols;
         cloud->height = depth_image.rows;
         cloud->is_dense = false;
-        float nan = std::numeric_limits<float>::quiet_NaN();
+        number_t nan = std::numeric_limits<number_t>::quiet_NaN();
         cloud->points.resize(depth_image.total(), pcl::PointXYZ(nan, nan, nan));
 
         depth_image.forEach(
@@ -207,9 +209,38 @@ namespace gfd {
                 if (not std::isnan(z)) {
                     number_t x = z*(pixel_x - image_center.x)/focal_length.x;
                     number_t y = z*(pixel_y - image_center.y)/focal_length.y;
-                    cloud->at(index) = std::move(pcl::PointXYZ(x, y, z));
-                };
+                    cloud->at(index) = pcl::PointXYZ(x, y, z);
+                }
             }
+        );
+        
+        return cloud;
+    }
+    
+    template <typename number_t>
+    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCLParallelized(
+            const std::vector<cv::Point2i>& pixel_locations, const cv::Mat_<number_t>& depth_image, 
+            const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
+        
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+        cloud->is_dense = false;
+        number_t nan = std::numeric_limits<number_t>::quiet_NaN();
+        cloud->points.resize(depth_image.total(), pcl::PointXYZ(nan, nan, nan));
+        cv::Mat locations_mat(pixel_locations, false); // convert from vector without copy
+        
+        locations_mat.forEach<cv::Point2i>(
+            [&focal_length, &image_center, &depth_image, &cloud](const cv::Point2i& pixel, const int* position) -> void {
+                size_t index = position[0];
+                const number_t& z = reinterpret_cast<number_t*>(depth_image.data)[pixel.y*depth_image.cols + pixel.x];
+                
+                if (not std::isnan(z)) {
+                    number_t x = z*(pixel.x - image_center.x)/focal_length.x;
+                    number_t y = z*(pixel.y - image_center.y)/focal_length.y;
+                    cloud->at(index) = pcl::PointXYZ(x, y, z);
+                }
+                
+            }
+            
         );
         
         return cloud;
