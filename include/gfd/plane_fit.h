@@ -99,12 +99,12 @@ namespace gfd {
             } else {
                 plane3.stats.outliers++;
             }
-            plane3.stats.error += std::abs(_err[ptIdx]);
-            plane3.stats.error_squared = _err[ptIdx]*_err[ptIdx];
+            plane3.stats.error_abs += std::abs(_err[ptIdx]);
+            plane3.stats.error_sq = _err[ptIdx]*_err[ptIdx];
         }
         
-        plane3.stats.error /= points.size();
-        plane3.stats.error_squared /= points.size();
+        plane3.stats.error_abs /= points.size();
+        plane3.stats.error_sq /= points.size();
         plane3.stats.noise /= points.size();
         plane3.x = planeCoeffs[0];
         plane3.y = planeCoeffs[1];
@@ -232,11 +232,11 @@ namespace gfd {
             } else {
                 plane3.stats.outliers++;
             }
-            plane3.stats.error += std::abs(_err[ptIdx]);
-            plane3.stats.error_squared = _err[ptIdx]*_err[ptIdx];
+            plane3.stats.error_abs += std::abs(_err[ptIdx]);
+            plane3.stats.error_sq = _err[ptIdx]*_err[ptIdx];
         }
-        plane3.stats.error /= numPoints;
-        plane3.stats.error_squared /= numPoints;
+        plane3.stats.error_abs /= numPoints;
+        plane3.stats.error_sq /= numPoints;
         plane3.stats.noise /= numPoints;
         plane3.scale((plane3.z > 0) ? -1.0 : 1.0);
         //std::cout << "iplaneCoeffs = " << plane3 << " error = " << error << std::endl;

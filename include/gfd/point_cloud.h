@@ -30,16 +30,6 @@
 //#include <pcl/sample_consensus/ransac.h>
 //#include <pcl/sample_consensus/sac_model_sphere.h>
 
-
-namespace cv {
-    
-    template <typename number_t>
-    std::vector<cv::Point3_<number_t>> toVectorPoint3(const cv::Mat_<cv::Vec<number_t, 3>>& points_mat) {
-        return static_cast<std::vector<cv::Point3_<number_t>>>(points_mat.reshape(3, points_mat.total()));
-    }
-    
-}
-
 namespace gfd {
     
     template <typename number_t>
@@ -72,28 +62,25 @@ namespace gfd {
     }
     
     template <typename number_t>
-    static cv::Mat_<cv::Vec<number_t, 3>> reproject(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
+    static std::vector<cv::Point3_<number_t>> reproject(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         
-        cv::Mat_<cv::Vec<number_t, 3>> points(depth_image.rows, depth_image.cols, cv::traits::Type<cv::Vec<number_t, 3>>::value);
+        std::vector<cv::Point3_<number_t>> points;
+        points.reserve(depth_image.total());
         
         assert(depth_image.isContinuous());
-        size_t pixel_y, pixel_x, index;
+        size_t pixel_y, pixel_x;
+        number_t* z_ptr = reinterpret_cast<number_t*>(depth_image.data);
         
         for (pixel_y = 0; pixel_y < depth_image.rows; ++pixel_y) {
-            for (pixel_x = 0; pixel_x < depth_image.cols; ++pixel_x) {
-                index = pixel_y*depth_image.cols + pixel_x;
-            
-                const number_t& z = reinterpret_cast<number_t*>(depth_image.data)[index];
-                cv::Vec<number_t, 3>& point = reinterpret_cast<cv::Vec<number_t, 3>*>(points.data)[index];
+            for (pixel_x = 0; pixel_x < depth_image.cols; ++pixel_x, z_ptr++) {
+                const number_t& z = *z_ptr;
                 
                 if (not std::isnan(z)) {
-                    point[0] = z*(pixel_x - image_center.x)/focal_length.x;
-                    point[1] = z*(pixel_y - image_center.y)/focal_length.y;
-                    point[2] = z;
+                    number_t x = z*(pixel_x - image_center.x)/focal_length.x;
+                    number_t y = z*(pixel_y - image_center.y)/focal_length.y;
+                    points.emplace_back(x, y, z);
                 } else {
-                    point[0] = z;
-                    point[1] = z;
-                    point[2] = z;
+                    points.emplace_back(z, z, z);
                 }
                 
             }
@@ -105,32 +92,29 @@ namespace gfd {
     }
     
     template <typename number_t>
-    static cv::Mat_<cv::Vec<number_t, 3>> reprojectParallelized(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
+    static std::vector<cv::Point3_<number_t>> reprojectParallelized(const cv::Mat_<number_t>& depth_image, const cv::Point_<number_t>& focal_length, const cv::Point_<number_t>& image_center) {
         
-        cv::Mat_<cv::Vec<number_t, 3>> points_mat(depth_image.rows, depth_image.cols, cv::traits::Type<cv::Vec<number_t, 3>>::value);
         assert(depth_image.isContinuous());
-
-        points_mat.forEach(
-            [&depth_image, &focal_length, &image_center](cv::Vec<number_t, 3>& point, const int* position) -> void {
+        std::vector<cv::Point3_<number_t>> points;
+        number_t nan = std::numeric_limits<number_t>::quiet_NaN();
+        points.resize(depth_image.total(), cv::Point3_<number_t>(nan, nan, nan));
+        number_t width = depth_image.cols;
+        
+        depth_image.forEach(
+            [&points, &width, &focal_length, &image_center](const float& z, const int* position) -> void {
                 size_t pixel_y = position[0];
                 size_t pixel_x = position[1];
-                size_t index = pixel_y*depth_image.cols + pixel_x;
-
-                const number_t& z = reinterpret_cast<number_t*>(depth_image.data)[index];
+                size_t index = pixel_y*width + pixel_x;
                 
                 if (not std::isnan(z)) {
-                    point[0] = z*(pixel_x - image_center.x)/focal_length.x;
-                    point[1] = z*(pixel_y - image_center.y)/focal_length.y;
-                    point[2] = z;
-                } else {
-                    point[0] = z;
-                    point[1] = z;
-                    point[2] = z;
-                }       
+                    number_t x = z*(pixel_x - image_center.x)/focal_length.x;
+                    number_t y = z*(pixel_y - image_center.y)/focal_length.y;
+                    points[index] = cv::Point3_<number_t>(x, y, z);
+                }
             }
         );
             
-        return points_mat;
+        return points;
         
     }
     
@@ -210,7 +194,7 @@ namespace gfd {
                 if (not std::isnan(z)) {
                     number_t x = z*(pixel_x - image_center.x)/focal_length.x;
                     number_t y = z*(pixel_y - image_center.y)/focal_length.y;
-                    cloud->at(index) = pcl::PointXYZ(x, y, z);
+                    cloud->points[index] = pcl::PointXYZ(x, y, z);
                 }
             }
         );
@@ -237,7 +221,7 @@ namespace gfd {
                 if (not std::isnan(z)) {
                     number_t x = z*(pixel.x - image_center.x)/focal_length.x;
                     number_t y = z*(pixel.y - image_center.y)/focal_length.y;
-                    cloud->at(index) = pcl::PointXYZ(x, y, z);
+                    cloud->points[index] = pcl::PointXYZ(x, y, z);
                 }
                 
             }

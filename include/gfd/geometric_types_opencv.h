@@ -286,17 +286,24 @@ namespace cv {
 
     class FitStatistics : public Consensus {
     public:
-        float error = 0;
-        float error_squared = 0;
+        float error_abs = 0;
+        float error_sq = 0;
         float noise = 0;
         
         FitStatistics() {
         }
         
-        FitStatistics(float _error, float _error_squared, float _noise, 
+        FitStatistics(float _error_abs, float _error_sq, float _noise, 
                 size_t _inliers, size_t _outliers, size_t _invalid) : 
-            error(_error), error_squared(_error_squared), noise(_noise), 
+            error_abs(_error_abs), error_sq(_error_sq), noise(_noise), 
             Consensus::Consensus(_inliers, _outliers, _invalid) {}
+        
+        friend std::ostream& operator<<(std::ostream& os, const FitStatistics& stats) {
+            os << "[error = " << stats.error_abs << ", error_sq = " << stats.error_sq 
+                << ", noise = " << stats.noise << ", i = " << stats.inliers 
+                << ", o = " << stats.outliers << ", nan = " << stats.invalid << "]";
+            return os;
+        }
         
     };
     
