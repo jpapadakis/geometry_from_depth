@@ -69,11 +69,11 @@ namespace cv {
         }
 
         number_t evaluate(const cv::Point3_<number_t>& pt) {
-            return this->x * pt.x + this->y * pt.y + this->z * pt.z + this->d;
+            return this->x*pt.x + this->y*pt.y + this->z*pt.z + this->d;
         }
 
-        number_t evaluate(number_t _x, number_t _y, number_t _z) {
-            return this->x * _x + this->y * _y + this->z * _z + this->d;
+        number_t evaluate(number_t x, number_t y, number_t z) {
+            return this->x*x + this->y*y + this->z*z + this->d;
         }
 
         number_t evaluateDerivative(int dim) {

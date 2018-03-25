@@ -151,16 +151,14 @@ namespace gfd {
         plane3.x = _planeCoeffs.at<number_t>(0);
         plane3.y = _planeCoeffs.at<number_t>(1);
         plane3.z = _planeCoeffs.at<number_t>(2);
-        number_t d3 = -(plane3.x * centroid.x + plane3.y * centroid.y + plane3.z * centroid.z);
-        plane3.d = d3;
-        //std::cout << "centroid_dist = " << plane3.evaluate(centroid) << std::endl;
-        cv::Mat _D = cv::Mat::ones(numPoints, 1, cv::traits::Type<number_t>::value);
-        _D *= plane3.d;
-        for (size_t ptIdx = 0; ptIdx < numPoints; ++ptIdx) {
-            M[3 * ptIdx] += centroid.x;
-            M[3 * ptIdx + 1] += centroid.y;
-            M[3 * ptIdx + 2] += centroid.z;
-        }
+        plane3.d = -(plane3.x * centroid.x + plane3.y * centroid.y + plane3.z * centroid.z);
+//        std::cout << "centroid_dist = " << plane3.evaluate(centroid) << std::endl; cv::Mat _D = cv::Mat::ones(numPoints, 1, cv::traits::Type<number_t>::value);
+//        cv::Mat _D *= plane3.d;
+//        for (size_t ptIdx = 0; ptIdx < numPoints; ++ptIdx) {
+//            M[3 * ptIdx] += centroid.x;
+//            M[3 * ptIdx + 1] += centroid.y;
+//            M[3 * ptIdx + 2] += centroid.z;
+//        }
         //std::cout << "plane.d =" << plane3.d << " D=" << _D << std::endl;
         //std::cout << "I_error=" << _error << std::endl;
         //std::cout << "M = " << M << std::endl;  [0.588991, 0.423888, -0.688047, 1.82959]
