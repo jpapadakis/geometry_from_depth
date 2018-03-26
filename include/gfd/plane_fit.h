@@ -20,6 +20,8 @@
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/sample_consensus/ransac.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
 
 namespace gfd {
     
@@ -244,10 +246,75 @@ namespace gfd {
         
     }
     
+    static cv::Plane3f fitPlaneRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr points, double distance_threshold = .01, size_t max_iterations = 1000, bool refine = true) {
+        
+        pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr plane_model = 
+                boost::make_shared<pcl::SampleConsensusModelPlane<pcl::PointXYZ>>(points);
+        pcl::RandomSampleConsensus<pcl::PointXYZ> ransac(plane_model);
+        
+        ransac.setDistanceThreshold(distance_threshold);
+        ransac.setMaxIterations(max_iterations);
+        ransac.computeModel();
+        
+        if (refine) {
+            ransac.refineModel();
+        }
+        
+        Eigen::VectorXf coeffs;
+        ransac.getModelCoefficients(coeffs);
+//        std::vector<int> inlier_indicies;
+//        ransac.getInliers(inlier_indicies);
+        
+        cv::Plane3f plane(coeffs[0], coeffs[1], coeffs[2], coeffs[3]);
+        plane.scale((plane.z > 0) ? -1.0 : 1.0);
+        
+        return plane;
+        
+    }
     
+    static cv::PlaneWithStats3f fitPlaneRANSACWithStats(pcl::PointCloud<pcl::PointXYZ>::Ptr points, double distance_threshold = .01, size_t max_iterations = 1000, bool refine = true) {
+        
+        pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr plane_model = 
+                boost::make_shared<pcl::SampleConsensusModelPlane<pcl::PointXYZ>>(points);
+        pcl::RandomSampleConsensus<pcl::PointXYZ> ransac(plane_model);
+        
+        ransac.setDistanceThreshold(distance_threshold);
+        ransac.setMaxIterations(max_iterations);
+        ransac.computeModel();
+        
+        if (refine) {
+            ransac.refineModel();
+        }
+        
+        Eigen::VectorXf coeffs;
+        ransac.getModelCoefficients(coeffs);
+        std::vector<int> inlier_indicies;
+        ransac.getInliers(inlier_indicies);
+        
+        cv::PlaneWithStats3f plane;
+        plane.x = coeffs[0];
+        plane.y = coeffs[1];
+        plane.z = coeffs[2];
+        plane.d = coeffs[3];
+        plane.scale((plane.z > 0) ? -1.0 : 1.0);
+        
+        plane.stats.inliers = inlier_indicies.size();
+        plane.stats.outliers = points->size() - plane.stats.inliers;
+        for (int inlier_index : inlier_indicies) {
+            const pcl::PointXYZ& point = points->at(inlier_index);
+            float point_error = plane.evaluate(point.x, point.y, point.z);
+            plane.stats.error_abs += point_error;
+            plane.stats.error_abs += point_error*point_error;
+            plane.stats.noise += getDepthStandardDeviation(point.z);
+        }
+        plane.stats.error_abs /= plane.stats.inliers;
+        plane.stats.error_sq /= plane.stats.inliers;
+        plane.stats.noise /= plane.stats.inliers;
+        
+        return plane;
+        
+    }
 
-    
-    
 }
 
 #endif /* PLANE_FIT_H */

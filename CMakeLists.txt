@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCV 3 REQUIRED)
 find_package(Boost REQUIRED)
-find_package(PCL REQUIRED COMPONENTS common)
+find_package(PCL REQUIRED)
 find_package(OpenMP)
 
 if (OPENMP_FOUND)
