@@ -1,6 +1,6 @@
 
 #include <gfd/point_cloud.h>
-#include <gfd/plane_fit.h>
+#include <gfd/plane_fitting.h>
 #include <iostream>
 #include <chrono>
 
@@ -29,11 +29,11 @@ int main(int argc, char** argv) {
     
     cv::Plane3f plane, plane2, plane3;
     cv::PlaneWithStats3f pws, pws2, pws3;
-    plane = gfd::fitImplicitPlaneLeastSquares(points);
-    plane2 = gfd::fitExplicitPlaneLeastSquares(points);
+    plane = gfd::fitPlaneImplicitLeastSquares(points);
+    plane2 = gfd::fitPlaneExplicitLeastSquares(points);
     plane3 = gfd::fitPlaneRANSAC(points_pcl);
-    pws = gfd::fitImplicitPlaneLeastSquaresWithStats(points);
-    pws2 = gfd::fitExplicitPlaneLeastSquaresWithStats(points);
+    pws = gfd::fitPlaneImplicitLeastSquaresWithStats(points);
+    pws2 = gfd::fitPlaneExplicitLeastSquaresWithStats(points);
     pws3 = gfd::fitPlaneRANSACWithStats(points_pcl);
     std::cout << "implicit plane fit: " << plane.toString() << "\n";
     std::cout << "explicit plane fit: " << plane2.toString() << "\n";

@@ -5,8 +5,8 @@
  * Created on March 19, 2018, 9:25 AM
  */
 
-#ifndef PLANE_FIT_H
-#define PLANE_FIT_H
+#ifndef PLANE_FITTING_H
+#define PLANE_FITTING_H
 
 #include <cmath>
 #include <vector>
@@ -33,7 +33,7 @@ namespace gfd {
     }
     
     template <typename number_t>
-    static cv::Plane3_<number_t> fitExplicitPlaneLeastSquares(const number_t* points, size_t num_points, size_t stride) {
+    static cv::Plane3_<number_t> fitPlaneExplicitLeastSquares(const number_t* points, size_t num_points, size_t stride) {
         
         cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<number_t>::value);
         cv::Mat _Z = cv::Mat::zeros(num_points, 1, cv::traits::Type<number_t>::value);
@@ -69,12 +69,12 @@ namespace gfd {
     }
     
     template <typename number_t>
-    static cv::Plane3_<number_t> fitExplicitPlaneLeastSquares(const std::vector<cv::Point3_<number_t>>& points) {
-        return fitExplicitPlaneLeastSquares(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
+    static cv::Plane3_<number_t> fitPlaneExplicitLeastSquares(const std::vector<cv::Point3_<number_t>>& points) {
+        return fitPlaneExplicitLeastSquares(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
     }
     
     template <typename number_t>
-    static cv::PlaneWithStats3_<number_t> fitExplicitPlaneLeastSquaresWithStats(const number_t* points, size_t num_points, size_t stride) {
+    static cv::PlaneWithStats3_<number_t> fitPlaneExplicitLeastSquaresWithStats(const number_t* points, size_t num_points, size_t stride) {
         
         cv::PlaneWithStats3_<number_t> plane3;
         
@@ -129,8 +129,8 @@ namespace gfd {
     }
     
     template <typename number_t>
-    static cv::PlaneWithStats3_<number_t> fitExplicitPlaneLeastSquaresWithStats(const std::vector<cv::Point3_<number_t>>& points) {
-        return fitExplicitPlaneLeastSquaresWithStats(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
+    static cv::PlaneWithStats3_<number_t> fitPlaneExplicitLeastSquaresWithStats(const std::vector<cv::Point3_<number_t>>& points) {
+        return fitPlaneExplicitLeastSquaresWithStats(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
     }
     
     template <typename number_t>
@@ -189,12 +189,12 @@ namespace gfd {
     }
     
     template <typename number_t>
-    static cv::Plane3_<number_t> fitImplicitPlaneLeastSquares(const std::vector<cv::Point3_<number_t>>& points) {
+    static cv::Plane3_<number_t> fitPlaneImplicitLeastSquares(const std::vector<cv::Point3_<number_t>>& points) {
         return fitImplicitPlaneLeastSquares(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
     }
     
     template <typename number_t>
-    static cv::PlaneWithStats3_<number_t> fitImplicitPlaneLeastSquaresWithStats(const number_t* points, size_t num_points, size_t stride) {
+    static cv::PlaneWithStats3_<number_t> fitPlaneImplicitLeastSquaresWithStats(const number_t* points, size_t num_points, size_t stride) {
         
         cv::PlaneWithStats3_<number_t> plane3;
         
@@ -267,8 +267,8 @@ namespace gfd {
     }
     
     template <typename number_t>
-    static cv::PlaneWithStats3_<number_t> fitImplicitPlaneLeastSquaresWithStats(const std::vector<cv::Point3_<number_t>>& points) {
-        return fitImplicitPlaneLeastSquaresWithStats(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
+    static cv::PlaneWithStats3_<number_t> fitPlaneImplicitLeastSquaresWithStats(const std::vector<cv::Point3_<number_t>>& points) {
+        return fitPlaneImplicitLeastSquaresWithStats(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
     }
     
     static cv::Plane3f fitPlaneRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr points, double distance_threshold = .01, size_t max_iterations = 1000, bool refine = true) {
@@ -342,5 +342,5 @@ namespace gfd {
 
 }
 
-#endif /* PLANE_FIT_H */
+#endif /* PLANE_FITTING_H */
 
