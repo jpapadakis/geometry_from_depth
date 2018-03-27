@@ -27,18 +27,18 @@ namespace gfd {
     
     static constexpr double DEPTH_NOISE_CONSTANT = 1.425e-3;
     
-    template <typename number_t>
-    number_t getDepthStandardDeviation(const number_t& depth) {
+    template <typename scalar_t>
+    scalar_t getDepthStandardDeviation(const scalar_t& depth) {
         return DEPTH_NOISE_CONSTANT*depth*depth;
     }
     
-    template <typename number_t>
-    static cv::Plane3_<number_t> fitPlaneExplicitLeastSquares(const number_t* points, size_t num_points, size_t stride) {
+    template <typename scalar_t>
+    static cv::Plane3_<scalar_t> fitPlaneExplicitLeastSquares(const scalar_t* points, size_t num_points, size_t stride) {
         
-        cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<number_t>::value);
-        cv::Mat _Z = cv::Mat::zeros(num_points, 1, cv::traits::Type<number_t>::value);
-        number_t* M = _M.ptr<number_t>();
-        number_t* Z = _Z.ptr<number_t>();
+        cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<scalar_t>::value);
+        cv::Mat _Z = cv::Mat::zeros(num_points, 1, cv::traits::Type<scalar_t>::value);
+        scalar_t* M = _M.ptr<scalar_t>();
+        scalar_t* Z = _Z.ptr<scalar_t>();
         
         for (size_t ptIdx = 0; ptIdx < num_points; ++ptIdx) {
             size_t pt_begin = stride*ptIdx;
@@ -49,17 +49,17 @@ namespace gfd {
         }
         cv::Mat _MtM = _M.t() * _M;
         cv::Mat _planeCoeffs = _MtM.inv() * _M.t() * _Z;
-        number_t* planeCoeffs = _planeCoeffs.ptr<number_t>();
+        scalar_t* planeCoeffs = _planeCoeffs.ptr<scalar_t>();
         //std::cout << "E_error=" << _error << std::endl;
         //std::cout << "M = " << M << std::endl;
         //std::cout << "Z = " << Z << std::endl;
         //std::cout << "eplaneCoeffs = " << _planeCoeffs << std::endl;
-        cv::Plane3_<number_t> plane3;
+        cv::Plane3_<scalar_t> plane3;
         plane3.x = planeCoeffs[0];
         plane3.y = planeCoeffs[1];
         plane3.z = -1;
         plane3.d = planeCoeffs[2];
-        number_t normScale = 1.0 / sqrt(plane3.x * plane3.x + plane3.y * plane3.y + plane3.z * plane3.z);
+        scalar_t normScale = 1.0 / sqrt(plane3.x * plane3.x + plane3.y * plane3.y + plane3.z * plane3.z);
         plane3.scale(normScale);
         //std::cout << "eplaneCoeffs = " << plane3 << std::endl;
         //std::cout.flush();
@@ -68,20 +68,25 @@ namespace gfd {
         
     }
     
-    template <typename number_t>
-    static cv::Plane3_<number_t> fitPlaneExplicitLeastSquares(const std::vector<cv::Point3_<number_t>>& points) {
-        return fitPlaneExplicitLeastSquares(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
+    template <typename scalar_t>
+    static cv::Plane3_<scalar_t> fitPlaneExplicitLeastSquares(const std::vector<cv::Point3_<scalar_t>>& points) {
+        return fitPlaneExplicitLeastSquares(reinterpret_cast<const scalar_t*>(points.data()), points.size(), 3);
     }
     
-    template <typename number_t>
-    static cv::PlaneWithStats3_<number_t> fitPlaneExplicitLeastSquaresWithStats(const number_t* points, size_t num_points, size_t stride) {
+    template <typename scalar_t>
+    static cv::Plane3_<scalar_t> fitPlaneExplicitLeastSquares(const Eigen::Matrix<scalar_t, 4, Eigen::Dynamic, Eigen::ColMajor>& points_homogeneous) {
+        return fitPlaneExplicitLeastSquares(points_homogeneous.data(), points_homogeneous.cols(), 4);
+    }
+    
+    template <typename scalar_t>
+    static cv::PlaneWithStats3_<scalar_t> fitPlaneExplicitLeastSquaresWithStats(const scalar_t* points, size_t num_points, size_t stride) {
         
-        cv::PlaneWithStats3_<number_t> plane3;
+        cv::PlaneWithStats3_<scalar_t> plane3;
         
-        cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<number_t>::value);
-        cv::Mat _Z = cv::Mat::zeros(num_points, 1, cv::traits::Type<number_t>::value);
-        number_t* M = _M.ptr<number_t>();
-        number_t* Z = _Z.ptr<number_t>();
+        cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<scalar_t>::value);
+        cv::Mat _Z = cv::Mat::zeros(num_points, 1, cv::traits::Type<scalar_t>::value);
+        scalar_t* M = _M.ptr<scalar_t>();
+        scalar_t* Z = _Z.ptr<scalar_t>();
         
         for (size_t ptIdx = 0; ptIdx < num_points; ++ptIdx) {
             size_t pt_begin = stride*ptIdx;
@@ -93,14 +98,14 @@ namespace gfd {
         }
         cv::Mat _MtM = _M.t() * _M;
         cv::Mat _planeCoeffs = _MtM.inv() * _M.t() * _Z;
-        number_t* planeCoeffs = _planeCoeffs.ptr<number_t>();
+        scalar_t* planeCoeffs = _planeCoeffs.ptr<scalar_t>();
         cv::Mat _error = _M * _planeCoeffs - _Z;
         //std::cout << "E_error=" << _error << std::endl;
         //std::cout << "M = " << M << std::endl;
         //std::cout << "Z = " << Z << std::endl;
         //std::cout << "eplaneCoeffs = " << _planeCoeffs << std::endl;           
-        number_t* _z = _Z.ptr<number_t>();
-        number_t* _err = _error.ptr<number_t>();
+        scalar_t* _z = _Z.ptr<scalar_t>();
+        scalar_t* _err = _error.ptr<scalar_t>();
 
         for (size_t ptIdx = 0; ptIdx < num_points; ptIdx++) {
             if (_err[ptIdx] < getDepthStandardDeviation(_z[ptIdx])) {
@@ -119,7 +124,7 @@ namespace gfd {
         plane3.y = planeCoeffs[1];
         plane3.z = -1;
         plane3.d = planeCoeffs[2];
-        number_t normScale = 1.0 / sqrt(plane3.x * plane3.x + plane3.y * plane3.y + plane3.z * plane3.z);
+        scalar_t normScale = 1.0 / sqrt(plane3.x * plane3.x + plane3.y * plane3.y + plane3.z * plane3.z);
         plane3.scale(normScale);
         //std::cout << "eplaneCoeffs = " << plane3 << " error = " << error << std::endl;
         //std::cout.flush();
@@ -128,18 +133,23 @@ namespace gfd {
         
     }
     
-    template <typename number_t>
-    static cv::PlaneWithStats3_<number_t> fitPlaneExplicitLeastSquaresWithStats(const std::vector<cv::Point3_<number_t>>& points) {
-        return fitPlaneExplicitLeastSquaresWithStats(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
+    template <typename scalar_t>
+    static cv::PlaneWithStats3_<scalar_t> fitPlaneExplicitLeastSquaresWithStats(const std::vector<cv::Point3_<scalar_t>>& points) {
+        return fitPlaneExplicitLeastSquaresWithStats(reinterpret_cast<const scalar_t*>(points.data()), points.size(), 3);
     }
     
-    template <typename number_t>
-    static cv::Plane3_<number_t> fitImplicitPlaneLeastSquares(const number_t* points, size_t num_points, size_t stride) {
+    template <typename scalar_t>
+    static cv::Plane3_<scalar_t> fitPlaneExplicitLeastSquaresWithStats(const Eigen::Matrix<scalar_t, 4, Eigen::Dynamic, Eigen::ColMajor>& points_homogeneous) {
+        return fitPlaneExplicitLeastSquaresWithStats(points_homogeneous.data(), points_homogeneous.cols(), 4);
+    }
+    
+    template <typename scalar_t>
+    static cv::Plane3_<scalar_t> fitImplicitPlaneLeastSquares(const scalar_t* points, size_t num_points, size_t stride) {
         
-        cv::Plane3_<number_t> plane3;
+        cv::Plane3_<scalar_t> plane3;
         
-        cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<number_t>::value);
-        number_t* M = _M.ptr<number_t>();
+        cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<scalar_t>::value);
+        scalar_t* M = _M.ptr<scalar_t>();
         cv::Point3f centroid(0, 0, 0);
         for (size_t ptIdx = 0; ptIdx < num_points; ++ptIdx) {
             size_t pt_begin = stride*ptIdx;
@@ -164,11 +174,11 @@ namespace gfd {
         //std::cout << "MtM = " << _MtM << std::endl;          
         //std::cout << "V = " << eigVecs << std::endl;          
         //std::cout << "coeffs = " << _planeCoeffs << std::endl; 
-        plane3.x = _planeCoeffs.at<number_t>(0);
-        plane3.y = _planeCoeffs.at<number_t>(1);
-        plane3.z = _planeCoeffs.at<number_t>(2);
+        plane3.x = _planeCoeffs.at<scalar_t>(0);
+        plane3.y = _planeCoeffs.at<scalar_t>(1);
+        plane3.z = _planeCoeffs.at<scalar_t>(2);
         plane3.d = -(plane3.x * centroid.x + plane3.y * centroid.y + plane3.z * centroid.z);
-//        std::cout << "centroid_dist = " << plane3.evaluate(centroid) << std::endl; cv::Mat _D = cv::Mat::ones(numPoints, 1, cv::traits::Type<number_t>::value);
+//        std::cout << "centroid_dist = " << plane3.evaluate(centroid) << std::endl; cv::Mat _D = cv::Mat::ones(numPoints, 1, cv::traits::Type<scalar_t>::value);
 //        cv::Mat _D *= plane3.d;
 //        for (size_t ptIdx = 0; ptIdx < numPoints; ++ptIdx) {
 //            M[3 * ptIdx] += centroid.x;
@@ -188,18 +198,23 @@ namespace gfd {
         
     }
     
-    template <typename number_t>
-    static cv::Plane3_<number_t> fitPlaneImplicitLeastSquares(const std::vector<cv::Point3_<number_t>>& points) {
-        return fitImplicitPlaneLeastSquares(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
+    template <typename scalar_t>
+    static cv::Plane3_<scalar_t> fitPlaneImplicitLeastSquares(const std::vector<cv::Point3_<scalar_t>>& points) {
+        return fitImplicitPlaneLeastSquares(reinterpret_cast<const scalar_t*>(points.data()), points.size(), 3);
     }
     
-    template <typename number_t>
-    static cv::PlaneWithStats3_<number_t> fitPlaneImplicitLeastSquaresWithStats(const number_t* points, size_t num_points, size_t stride) {
+    template <typename scalar_t>
+    static cv::Plane3_<scalar_t> fitPlaneImplicitLeastSquares(const Eigen::Matrix<scalar_t, 4, Eigen::Dynamic, Eigen::ColMajor>& points_homogeneous) {
+        return fitPlaneImplicitLeastSquares(points_homogeneous.data(), points_homogeneous.cols(), 4);
+    }
+    
+    template <typename scalar_t>
+    static cv::PlaneWithStats3_<scalar_t> fitPlaneImplicitLeastSquaresWithStats(const scalar_t* points, size_t num_points, size_t stride) {
         
-        cv::PlaneWithStats3_<number_t> plane3;
+        cv::PlaneWithStats3_<scalar_t> plane3;
         
-        cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<number_t>::value);
-        number_t* M = _M.ptr<number_t>();
+        cv::Mat _M = cv::Mat::zeros(num_points, 3, cv::traits::Type<scalar_t>::value);
+        scalar_t* M = _M.ptr<scalar_t>();
         cv::Point3f centroid(0, 0, 0);
         for (size_t ptIdx = 0; ptIdx < num_points; ++ptIdx) {
             size_t pt_begin = stride*ptIdx;
@@ -225,13 +240,13 @@ namespace gfd {
         //std::cout << "MtM = " << _MtM << std::endl;          
         //std::cout << "V = " << eigVecs << std::endl;          
         //std::cout << "coeffs = " << _planeCoeffs << std::endl; 
-        plane3.x = _planeCoeffs.at<number_t>(0);
-        plane3.y = _planeCoeffs.at<number_t>(1);
-        plane3.z = _planeCoeffs.at<number_t>(2);
-        number_t d3 = -(plane3.x * centroid.x + plane3.y * centroid.y + plane3.z * centroid.z);
+        plane3.x = _planeCoeffs.at<scalar_t>(0);
+        plane3.y = _planeCoeffs.at<scalar_t>(1);
+        plane3.z = _planeCoeffs.at<scalar_t>(2);
+        scalar_t d3 = -(plane3.x * centroid.x + plane3.y * centroid.y + plane3.z * centroid.z);
         plane3.d = d3;
         //std::cout << "centroid_dist = " << plane3.evaluate(centroid) << std::endl;
-        cv::Mat _D = cv::Mat::ones(num_points, 1, cv::traits::Type<number_t>::value);
+        cv::Mat _D = cv::Mat::ones(num_points, 1, cv::traits::Type<scalar_t>::value);
         _D *= plane3.d;
         for (size_t ptIdx = 0; ptIdx < num_points; ++ptIdx) {
             M[3 * ptIdx] += centroid.x;
@@ -243,8 +258,8 @@ namespace gfd {
         //std::cout << "I_error=" << _error << std::endl;
         //std::cout << "M = " << M << std::endl;  [0.588991, 0.423888, -0.688047, 1.82959]
         //std::cout << "Z = " << Z << std::endl;
-        //number_t* _z = _Z.ptr<number_t>();
-        number_t* _err = _error.ptr<number_t>();
+        //scalar_t* _z = _Z.ptr<scalar_t>();
+        scalar_t* _err = _error.ptr<scalar_t>();
         
         for (size_t ptIdx = 0; ptIdx < num_points; ptIdx++) {
             if (_err[ptIdx] < getDepthStandardDeviation(points[stride*ptIdx + 2])) {
@@ -266,11 +281,16 @@ namespace gfd {
         
     }
     
-    template <typename number_t>
-    static cv::PlaneWithStats3_<number_t> fitPlaneImplicitLeastSquaresWithStats(const std::vector<cv::Point3_<number_t>>& points) {
-        return fitPlaneImplicitLeastSquaresWithStats(reinterpret_cast<const number_t*>(points.data()), points.size(), 3);
+    template <typename scalar_t>
+    static cv::PlaneWithStats3_<scalar_t> fitPlaneImplicitLeastSquaresWithStats(const std::vector<cv::Point3_<scalar_t>>& points) {
+        return fitPlaneImplicitLeastSquaresWithStats(reinterpret_cast<const scalar_t*>(points.data()), points.size(), 3);
     }
     
+    template <typename scalar_t>
+    static cv::Plane3_<scalar_t> fitPlaneImplicitLeastSquaresWithStats(const Eigen::Matrix<scalar_t, 4, Eigen::Dynamic, Eigen::ColMajor>& points_homogeneous) {
+        return fitPlaneImplicitLeastSquaresWithStats(points_homogeneous.data(), points_homogeneous.cols(), 4);
+    }
+   
     static cv::Plane3f fitPlaneRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr points, double distance_threshold = .01, size_t max_iterations = 1000, bool refine = true) {
         
         pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr plane_model = 
