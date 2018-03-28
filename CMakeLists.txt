@@ -113,7 +113,7 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES gfd
 #    CATKIN_DEPENDS
-    DEPENDS OpenCV Boost PCL OpenMP
+#    DEPENDS OpenCV Boost PCL
 )
 
 ###########
