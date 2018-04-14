@@ -22,6 +22,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 
 namespace gfd {
     
@@ -357,6 +359,65 @@ namespace gfd {
         plane.stats.noise /= plane.stats.inliers;
         
         return plane;
+        
+    }
+    
+    static std::vector<cv::Plane3f> planeSegmentationRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr points, double distance_threshold = .01, size_t max_iterations = 1000, bool refine = true) {
+
+        std::vector<cv::Plane3f> planes;
+        
+        // Get segmentation ready
+        pcl::ModelCoefficients::Ptr coefficients = boost::make_shared<pcl::ModelCoefficients>();
+        pcl::PointIndices::Ptr inliers = boost::make_shared<pcl::PointIndices>();
+        pcl::SACSegmentation<pcl::PointXYZ> segmentation;
+        pcl::ExtractIndices<pcl::PointXYZ> extract;
+        
+        segmentation.setModelType(pcl::SACMODEL_PLANE);
+        segmentation.setMethodType(pcl::SAC_RANSAC);
+        segmentation.setDistanceThreshold(distance_threshold);
+        segmentation.setOptimizeCoefficients(refine);
+        segmentation.setMaxIterations(max_iterations);
+
+        // Create pointcloud to publish inliers
+//        pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        size_t original_size = points->size();
+        size_t num_planes = 0;
+        float min_percentage = .10;
+        while (points->size() > .5*original_size) {
+            // Fit a plane
+            segmentation.setInputCloud(points);
+            segmentation.segment(*inliers, *coefficients);
+            
+            if (inliers->indices.size() < min_percentage*original_size) {
+                std::cout << "plane only explains " << float(inliers->indices.size())/original_size;
+                break;
+            }
+            
+            planes.emplace_back(coefficients->values[0], coefficients->values[1], 
+                    coefficients->values[2], coefficients->values[3]);
+            cv::Plane3f& plane = planes.back();
+            plane.scale((plane.z > 0) ? -1.0 : 1.0);
+            
+            std::cout << "Fit plane: " << plane << ", percentage of points: " << float(inliers->indices.size())/original_size << std::endl;
+
+            // Extract inliers
+            extract.setInputCloud(points);
+            extract.setIndices(inliers);
+            extract.setNegative(true);
+            pcl::PointCloud<pcl::PointXYZ> filtered_points;
+            extract.filter(filtered_points); // result contains the outliers
+            points->swap(filtered_points);
+            
+            num_planes++;
+        }
+
+        // Publish points
+//        sensor_msgs::PointCloud2 cloud_publish;
+//        pcl::toROSMsg(*output_cloud, cloud_publish);
+//        cloud_publish.header = msg->header;
+//        _pub_inliers.publish(cloud_publish);
+    
+        return planes;
         
     }
 
