@@ -1,6 +1,6 @@
 
-#include <gfd/point_cloud.h>
-#include <gfd/plane_fitting.h>
+#include <gfd/point_cloud.hpp>
+#include <gfd/plane_fitting.hpp>
 #include <iostream>
 #include <chrono>
 
@@ -16,16 +16,16 @@ int main(int argc, char** argv) {
         }
     }
     
-    std::cout << gfd::reproject(depth, focal_length, center).at(100*depth.cols + 100) << "\n";
-    std::cout << gfd::reprojectParallelized(depth, focal_length, center).at(100*depth.cols + 100) << "\n";
-    std::cout << gfd::reprojectPCL(depth, focal_length, center)->at(100, 100) << "\n";
-    std::cout << gfd::reprojectPCLParallelized(depth, focal_length, center)->at(100, 100) << "\n";
-    std::cout << gfd::reproject(locations, depth, focal_length, center).at(100*depth.cols + 100) << "\n";
-    std::cout << gfd::reprojectPCL(locations, depth, focal_length, center)->at(100*depth.cols + 100) << "\n";
-    std::cout << gfd::reprojectPCLParallelized(locations, depth, focal_length, center)->at(100*depth.cols + 100) << "\n";
+    std::cout << gfd::reconstruct(depth, focal_length, center).at(100*depth.cols + 100) << "\n";
+    std::cout << gfd::reconstructParallelized(depth, focal_length, center).at(100*depth.cols + 100) << "\n";
+    std::cout << gfd::reconstructPCL(depth, focal_length, center)->at(100, 100) << "\n";
+    std::cout << gfd::reconstructPCLParallelized(depth, focal_length, center)->at(100, 100) << "\n";
+    std::cout << gfd::reconstruct(locations, depth, focal_length, center).at(100*depth.cols + 100) << "\n";
+    std::cout << gfd::reconstructPCL(locations, depth, focal_length, center)->at(100*depth.cols + 100) << "\n";
+    std::cout << gfd::reconstructPCLParallelized(locations, depth, focal_length, center)->at(100*depth.cols + 100) << "\n";
     
-    std::vector<cv::Point3f> points = gfd::reproject(depth, focal_length, center);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr points_pcl = gfd::reprojectPCL(locations, depth, focal_length, center);
+    std::vector<cv::Point3f> points = gfd::reconstruct(depth, focal_length, center);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr points_pcl = gfd::reconstructPCL(locations, depth, focal_length, center);
     
     cv::Plane3f plane, plane2, plane3;
     cv::PlaneWithStats3f pws, pws2, pws3;

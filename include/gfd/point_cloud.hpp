@@ -1,46 +1,34 @@
 /* 
- * File:   point_cloud.h
+ * File:   point_cloud.hpp
  * Author: John Papadakis
  *
  * Created on March 16, 2018, 1:42 PM
  */
 
-#ifndef POINT_CLOUD_H
-#define POINT_CLOUD_H
+#ifndef POINT_CLOUD_HPP
+#define POINT_CLOUD_HPP
 
 #include <cmath>
-//#include <tuple>
 #include <vector>
-//#include <map>
-#include <cassert>
-#include <iostream>
-
-
 
 #include <opencv2/core.hpp>
-//#include <opencv2/imgproc.hpp>
-//#include <opencv2/highgui.hpp>
-//#include <opencv2/calib3d.hpp>
 
 #include <boost/make_shared.hpp>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
-//#include <pcl/sample_consensus/ransac.h>
-//#include <pcl/sample_consensus/sac_model_sphere.h>
-
 namespace gfd {
     
     template <typename scalar_t>
-    static cv::Point3_<scalar_t> reproject(cv::Point2i pixel, scalar_t depth, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
+    static cv::Point3_<scalar_t> reconstruct(cv::Point2i pixel, scalar_t depth, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
         scalar_t x = depth*(pixel.x - image_center.x)/focal_length.x;
         scalar_t y = depth*(pixel.y - image_center.y)/focal_length.y;
         return cv::Point3_<scalar_t>(x, y, depth);
     }
     
     template <typename scalar_t>
-    static std::vector<cv::Point3_<scalar_t>> reproject(const std::vector<cv::Point2i>& pixels, const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
+    static std::vector<cv::Point3_<scalar_t>> reconstruct(const std::vector<cv::Point2i>& pixels, const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
         
         std::vector<cv::Point3_<scalar_t>> points;
         points.reserve(pixels.size());
@@ -62,7 +50,7 @@ namespace gfd {
     }
     
     template <typename scalar_t>
-    static std::vector<cv::Point3_<scalar_t>> reproject(const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
+    static std::vector<cv::Point3_<scalar_t>> reconstruct(const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
         
         std::vector<cv::Point3_<scalar_t>> points;
         points.reserve(depth_image.total());
@@ -92,7 +80,7 @@ namespace gfd {
     }
     
     template <typename scalar_t>
-    static std::vector<cv::Point3_<scalar_t>> reprojectParallelized(const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
+    static std::vector<cv::Point3_<scalar_t>> reconstructParallelized(const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
         
         assert(depth_image.isContinuous());
         std::vector<cv::Point3_<scalar_t>> points;
@@ -119,7 +107,7 @@ namespace gfd {
     }
     
     template <typename scalar_t>
-    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCL(const std::vector<cv::Point2i>& pixels, 
+    static pcl::PointCloud<pcl::PointXYZ>::Ptr reconstructPCL(const std::vector<cv::Point2i>& pixels, 
             const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
         
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -143,7 +131,7 @@ namespace gfd {
     }
     
     template <typename scalar_t>
-    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCL(const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
+    static pcl::PointCloud<pcl::PointXYZ>::Ptr reconstructPCL(const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
         
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
         cloud->width = depth_image.cols;
@@ -176,7 +164,7 @@ namespace gfd {
     }
     
     template <typename scalar_t>
-    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCLParallelized(const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
+    static pcl::PointCloud<pcl::PointXYZ>::Ptr reconstructPCLParallelized(const cv::Mat_<scalar_t>& depth_image, const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
         
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
         cloud->width = depth_image.cols;
@@ -203,7 +191,7 @@ namespace gfd {
     }
     
     template <typename scalar_t>
-    static pcl::PointCloud<pcl::PointXYZ>::Ptr reprojectPCLParallelized(
+    static pcl::PointCloud<pcl::PointXYZ>::Ptr reconstructPCLParallelized(
             const std::vector<cv::Point2i>& pixel_locations, const cv::Mat_<scalar_t>& depth_image, 
             const cv::Point_<scalar_t>& focal_length, const cv::Point_<scalar_t>& image_center) {
         
@@ -233,5 +221,5 @@ namespace gfd {
     
 }
 
-#endif /* POINT_CLOUD_H */
+#endif /* POINT_CLOUD_HPP */
 
