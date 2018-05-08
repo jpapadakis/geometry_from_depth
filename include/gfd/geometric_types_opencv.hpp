@@ -5,8 +5,8 @@
  * Created on March 19, 2018, 10:57 AM
  */
 
-#ifndef GEOMETRIC_TYPES_OPENCV_H
-#define GEOMETRIC_TYPES_OPENCV_H
+#ifndef GEOMETRIC_TYPES_OPENCV_HPP
+#define GEOMETRIC_TYPES_OPENCV_HPP
 
 #include <cmath>
 #include <iostream>
@@ -373,5 +373,5 @@ namespace cv {
     
 }
 
-#endif /* GEOMETRIC_TYPES_OPENCV_H */
+#endif /* GEOMETRIC_TYPES_OPENCV_HPP */
 

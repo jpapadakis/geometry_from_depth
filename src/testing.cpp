@@ -1,5 +1,5 @@
 
-#include <gfd/point_cloud.hpp>
+#include <gfd/point_reconstruction.hpp>
 #include <gfd/plane_fitting.hpp>
 #include <iostream>
 #include <chrono>

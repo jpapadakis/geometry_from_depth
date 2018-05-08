@@ -1,12 +1,12 @@
 /* 
- * File:   point_cloud.hpp
+ * File:   point_reconstruction.hpp
  * Author: John Papadakis
  *
  * Created on March 16, 2018, 1:42 PM
  */
 
-#ifndef POINT_CLOUD_HPP
-#define POINT_CLOUD_HPP
+#ifndef POINT_RECONSTRUCTION_HPP
+#define POINT_RECONSTRUCTION_HPP
 
 #include <cmath>
 #include <vector>
@@ -221,5 +221,5 @@ namespace gfd {
     
 }
 
-#endif /* POINT_CLOUD_HPP */
+#endif /* POINT_RECONSTRUCTION_HPP */
 

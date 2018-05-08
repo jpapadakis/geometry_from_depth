@@ -1,12 +1,12 @@
 /* 
- * File:   plane_fit.h
+ * File:   plane_fit.hpp
  * Author: Andrew Willis, John Papadakis
  *
  * Created on March 19, 2018, 9:25 AM
  */
 
-#ifndef PLANE_FITTING_H
-#define PLANE_FITTING_H
+#ifndef PLANE_FITTING_HPP
+#define PLANE_FITTING_HPP
 
 #include <cmath>
 #include <vector>
@@ -14,7 +14,7 @@
 #include <iostream>
 
 #include <opencv2/core.hpp>
-#include <gfd/geometric_types_opencv.h>
+#include <gfd/geometric_types_opencv.hpp>
 
 #include <boost/make_shared.hpp>
 
@@ -423,5 +423,5 @@ namespace gfd {
 
 }
 
-#endif /* PLANE_FITTING_H */
+#endif /* PLANE_FITTING_HPP */
 
