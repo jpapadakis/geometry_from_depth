@@ -364,9 +364,8 @@ namespace gfd {
     
     static std::vector<cv::Plane3f> planeExtractionRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr points, double distance_threshold = .01, size_t max_iterations = 1000, bool refine = true) {
 
-        std::vector<cv::Plane3f> planes;
         
-        // Get segmentation ready
+        
         pcl::ModelCoefficients::Ptr coefficients = boost::make_shared<pcl::ModelCoefficients>();
         pcl::PointIndices::Ptr inliers = boost::make_shared<pcl::PointIndices>();
         pcl::SACSegmentation<pcl::PointXYZ> segmentation;
@@ -378,18 +377,17 @@ namespace gfd {
         segmentation.setOptimizeCoefficients(refine);
         segmentation.setMaxIterations(max_iterations);
 
-        // Create pointcloud to publish inliers
-//        pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         size_t original_size = points->size();
         size_t num_planes = 0;
         float min_percentage = .10;
-        while (points->size() > .5*original_size) {
-            // Fit a plane
+        std::vector<cv::Plane3f> planes;
+        
+        while (points->size() > .3*original_size) {
+            
             segmentation.setInputCloud(points);
             segmentation.segment(*inliers, *coefficients);
             
             if (inliers->indices.size() < min_percentage*original_size) {
-                std::cout << "plane only explains " << float(inliers->indices.size())/original_size;
                 break;
             }
             
@@ -410,12 +408,6 @@ namespace gfd {
             
             num_planes++;
         }
-
-        // Publish points
-//        sensor_msgs::PointCloud2 cloud_publish;
-//        pcl::toROSMsg(*output_cloud, cloud_publish);
-//        cloud_publish.header = msg->header;
-//        _pub_inliers.publish(cloud_publish);
     
         return planes;
         
